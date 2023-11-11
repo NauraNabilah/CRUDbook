@@ -4,8 +4,57 @@ const {
     responseNotFound,
     responseSuccess
 } = require ('../traits/ApiResponse')
+const { connect } = require('../routes/book')
 // const { connect } = require('../routes/book')
 const pool = mysql.createPool(dbConfig)
+
+const search = (req, res) => {
+    const keyword = req.query.keyword
+
+    const query = `SELECT * FROM books WHERE nama LIKE '%${keyword}%'`
+
+    pool.getConnection((err, connection) => {
+        if(err) throw err
+
+        connection.query(query,(err, results) => {
+            if(err) throw err
+
+            if(results.length == 0){
+                return res.json({
+                    message: 'Data tidak ditemukan'
+                })
+            }
+
+            responseSuccess(res, results, 'Book successfully fetched')
+        })
+
+        connection.release()
+    })
+}
+
+const sortBy = (req, res) => {
+    const orderBy = req.query.order
+
+    //DESC/ ASC
+    const query = `SELECT * FROM books ORDER BY nama ${orderBy}`
+
+    pool. getConnection((err, connection) => {
+        if(err) throw err
+
+        connection.query(query, (err, results) => {
+            if(err) throw err
+
+            if(results.length == 0){
+                responseNotFound(res)
+                return
+            }
+
+            responseSuccess(res, results, 'Book successfully fetched')
+        })
+
+        connection.release()
+    })
+}
 
 const getBooks = (req, res) => {
     const query = "SELECT * FROM books"
@@ -130,5 +179,7 @@ module.exports = {
     getBook,
     addBook,
     updateBook,
-    deleteBook
+    deleteBook,
+    search,
+    sortBy
 } 
